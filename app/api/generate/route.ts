@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-const jobs = new Map();
+// This is a temporary solution. In a production environment,
+// you should use a database or external storage service.
+const TEMP_STORAGE = new Map();
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -31,10 +33,10 @@ async function generateImage(jobId: string, params: Record<string, unknown>) {
     }
 
     const data = await response.json();
-    jobs.set(jobId, { status: 'completed', data });
+    TEMP_STORAGE.set(jobId, { status: 'completed', data });
   } catch (error) {
     console.error('Error generating image:', error);
-    jobs.set(jobId, { status: 'error', error: 'Failed to generate image' });
+    TEMP_STORAGE.set(jobId, { status: 'error', error: 'Failed to generate image' });
   }
 }
 
@@ -46,19 +48,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing jobId' }, { status: 400 });
   }
 
-  const job = jobs.get(jobId);
+  const job = TEMP_STORAGE.get(jobId);
 
   if (!job) {
     return NextResponse.json({ status: 'pending' });
   }
 
   if (job.status === 'completed') {
-    jobs.delete(jobId); // Clean up the job data
+    TEMP_STORAGE.delete(jobId); // Clean up the job data
     return NextResponse.json(job.data);
   }
 
   if (job.status === 'error') {
-    jobs.delete(jobId); // Clean up the job data
+    TEMP_STORAGE.delete(jobId); // Clean up the job data
     return NextResponse.json({ error: job.error }, { status: 500 });
   }
 

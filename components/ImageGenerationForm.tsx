@@ -76,14 +76,25 @@ export default function ImageGenerationForm({ onImageGenerated }: ImageGeneratio
           onImageGenerated(data.results[0]);
           setIsLoading(false);
           setProgress(100);
+        } else if (data.error) {
+          clearInterval(pollInterval);
+          console.error('Error generating image:', data.error);
+          setIsLoading(false);
+          setProgress(0);
+          // Handle error (e.g., show error message to user)
         } else {
           clearInterval(pollInterval);
-          throw new Error('No image generated');
+          setIsLoading(false);
+          setProgress(0);
+          console.error('Unexpected response from server');
+          // Handle unexpected response
         }
       } catch (error) {
         clearInterval(pollInterval);
         console.error('Error polling job status:', error);
         setIsLoading(false);
+        setProgress(0);
+        // Handle error (e.g., show error message to user)
       }
     }, 2000); // Poll every 2 seconds
   };
