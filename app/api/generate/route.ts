@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-let jobs = new Map();
+const jobs = new Map();
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ jobId });
 }
 
-async function generateImage(jobId: string, params: any) {
+async function generateImage(jobId: string, params: Record<string, unknown>) {
   const apiUrl = process.env.API_URL || 'http://localhost:5000';
 
   try {

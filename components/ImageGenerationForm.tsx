@@ -28,7 +28,6 @@ export default function ImageGenerationForm({ onImageGenerated }: ImageGeneratio
   const [seed, setSeed] = useState(42);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [jobId, setJobId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +56,6 @@ export default function ImageGenerationForm({ onImageGenerated }: ImageGeneratio
       }
 
       const { jobId } = await response.json();
-      setJobId(jobId);
       pollJobStatus(jobId);
     } catch (error) {
       console.error('Error starting image generation:', error);
