@@ -27,10 +27,13 @@ export default function ImageGenerationForm({ onImageGenerated }: ImageGeneratio
   const [guidance, setGuidance] = useState(7.5);
   const [seed, setSeed] = useState(42);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setProgress(0);
     onImageGenerated(null);
 
     try {
@@ -50,21 +53,41 @@ export default function ImageGenerationForm({ onImageGenerated }: ImageGeneratio
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate image');
+        throw new Error('Failed to start image generation');
       }
 
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        onImageGenerated(data.results[0]);
-      } else {
-        throw new Error('No image generated');
-      }
+      const { jobId } = await response.json();
+      setJobId(jobId);
+      pollJobStatus(jobId);
     } catch (error) {
-      console.error('Error generating image:', error);
-      // Handle error (e.g., show error message to user)
-    } finally {
+      console.error('Error starting image generation:', error);
       setIsLoading(false);
     }
+  };
+
+  const pollJobStatus = async (jobId: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/generate?jobId=${jobId}`);
+        const data = await response.json();
+
+        if (data.status === 'pending') {
+          setProgress((prev) => Math.min(prev + 5, 95));
+        } else if (data.results && data.results.length > 0) {
+          clearInterval(pollInterval);
+          onImageGenerated(data.results[0]);
+          setIsLoading(false);
+          setProgress(100);
+        } else {
+          clearInterval(pollInterval);
+          throw new Error('No image generated');
+        }
+      } catch (error) {
+        clearInterval(pollInterval);
+        console.error('Error polling job status:', error);
+        setIsLoading(false);
+      }
+    }, 2000); // Poll every 2 seconds
   };
 
   return (
@@ -136,7 +159,7 @@ export default function ImageGenerationForm({ onImageGenerated }: ImageGeneratio
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Generating...' : 'Generate'}
+        {isLoading ? `Generating... ${progress}%` : 'Generate'}
       </Button>
     </form>
   );
