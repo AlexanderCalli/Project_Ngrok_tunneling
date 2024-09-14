@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+export const config = {
+  maxDuration: 300 // This sets the timeout to 5 minutes (300 seconds)
+};
+
 export async function POST(request: Request) {
   const body = await request.json();
 
